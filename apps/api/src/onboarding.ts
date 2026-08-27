@@ -10,8 +10,8 @@ import {
 
 /**
  * First-run conversational onboarding, seeded deterministically into the bot's
- * thread: greeting, a focus choice, two renames, and Composio app cards the
- * user authorizes inline. No model tokens are spent.
+ * thread: greeting, a focus choice, and Composio app cards the user authorizes
+ * inline. Focus must not rename the bot. No model tokens are spent.
  */
 
 type OnboardingDeps = {

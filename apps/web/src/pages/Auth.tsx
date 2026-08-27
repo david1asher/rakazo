@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "../lib/auth";
 
@@ -12,8 +12,14 @@ export function AuthPage({ mode }: { mode: "in" | "up" }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const passwordFieldId = mode === "in" ? "current-password" : "new-password";
   const title =
     mode === "in" ? <Trans>Sign in to Rakazo</Trans> : <Trans>Create your Rakazo</Trans>;
+
+  useEffect(() => {
+    setPassword("");
+    setShowPassword(false);
+  }, [mode]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -71,11 +77,13 @@ export function AuthPage({ mode }: { mode: "in" | "up" }) {
             className="mt-2 w-full rounded-[13px] border border-[#E4E4DE] bg-[#F1F1ED] px-[18px] py-[17px] text-[17px] text-[#1B1B1E] outline-none"
           />
         </label>
-        <label className="mt-4 w-full text-[16px] text-[#6E6E68]">
-          <Trans>Password</Trans>
+        <div className="mt-4 w-full text-[16px] text-[#6E6E68]">
+          <label htmlFor={passwordFieldId}>
+            <Trans>Password</Trans>
+          </label>
           <div className="relative mt-2">
             <input
-              id={mode === "in" ? "current-password" : "new-password"}
+              id={passwordFieldId}
               name="password"
               autoComplete={mode === "in" ? "current-password" : "new-password"}
               value={password}
@@ -128,7 +136,7 @@ export function AuthPage({ mode }: { mode: "in" | "up" }) {
               )}
             </button>
           </div>
-        </label>
+        </div>
         {error ? <p className="mt-3 w-full text-sm text-[#C94244]">{error}</p> : null}
         <button
           type="submit"
