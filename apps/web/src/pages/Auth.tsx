@@ -1,5 +1,5 @@
 import { Trans, useLingui } from "@lingui/react/macro";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { authClient } from "../lib/auth";
 
@@ -15,11 +15,6 @@ export function AuthPage({ mode }: { mode: "in" | "up" }) {
   const passwordFieldId = mode === "in" ? "current-password" : "new-password";
   const title =
     mode === "in" ? <Trans>Sign in to Rakazo</Trans> : <Trans>Create your Rakazo</Trans>;
-
-  useEffect(() => {
-    setPassword("");
-    setShowPassword(false);
-  }, [mode]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
