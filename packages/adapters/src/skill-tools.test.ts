@@ -279,10 +279,24 @@ describe("skill tools", () => {
     ]);
 
     const records = await listAgentSkillRecords(prisma as never, owner);
-    expect(records.filter((row) => row.name.toLowerCase() === "interrogate")).toHaveLength(1);
+    const colliding = records.filter((row) => row.name.toLowerCase() === "interrogate");
+    // Catalog shows one entry (the user row), not both builtin + user.
+    expect(colliding).toHaveLength(1);
+    expect(colliding[0]).toMatchObject({
+      id: "legacy-1",
+      source: "user",
+      readOnly: false,
+    });
+    expect(records.some((row) => row.id === "builtin:Interrogate")).toBe(false);
 
-    const read = await skillReadFromTool(prisma as never, owner, { name: "Interrogate" });
-    expect(read).toMatchObject({ name: "interrogate", source: "user", readOnly: false });
+    // Name lookup (/Interrogate, skill_read by name) hits the user skill, not the builtin.
+    const readByName = await skillReadFromTool(prisma as never, owner, { name: "Interrogate" });
+    expect(readByName).toMatchObject({ name: "interrogate", source: "user", readOnly: false });
+
+    // The persisted user row stays reachable by id.
+    const readById = await skillReadFromTool(prisma as never, owner, { skillId: "legacy-1" });
+    expect(readById).toMatchObject({ name: "interrogate", source: "user", readOnly: false });
+    expect(String(readById.content)).toContain("my steps");
 
     expect(
       await skillUpdateFromTool(prisma as never, owner, {
