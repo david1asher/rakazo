@@ -62,6 +62,19 @@ describe("Pi model catalog", () => {
     });
   });
 
+  it("normalizes a PI_DEFAULT_MODEL id that ends in -latest", async () => {
+    vi.stubEnv("PI_DEFAULT_PROVIDER", "openrouter");
+    vi.stubEnv("PI_DEFAULT_MODEL", "foo-latest");
+    vi.resetModules();
+
+    const { listPiCatalog: listConfiguredCatalog } = await import("./pi-models.js");
+    expect(listConfiguredCatalog()[0]).toMatchObject({
+      provider: "openrouter",
+      id: "foo-latest",
+      label: "foo (auto-updates)",
+    });
+  });
+
   it("does not advertise a synthetic model for providers the runtime cannot synthesize", async () => {
     vi.stubEnv("PI_DEFAULT_PROVIDER", "anthropic");
     vi.stubEnv("PI_DEFAULT_MODEL", "future/unknown-model");
@@ -115,6 +128,17 @@ describe("catalogModelLabel", () => {
     expect(
       catalogModelLabel("some-model", "Some Model Latest", ["some-model", "some-model-20251001"]),
     ).toBe("Some Model (auto-updates)");
+    expect(
+      catalogModelLabel("mistral-medium", "Mistral Medium Latest", [
+        "mistral-medium",
+        "mistral-medium-2508",
+      ]),
+    ).toBe("Mistral Medium (auto-updates)");
+  });
+
+  it("strips id separators when the name is the bare -latest or /latest id", () => {
+    expect(catalogModelLabel("foo-latest", "foo-latest", [])).toBe("foo (auto-updates)");
+    expect(catalogModelLabel("foo/latest", "foo/latest", [])).toBe("foo (auto-updates)");
   });
 
   it("drops a latest marker from a pinned id rather than promising updates", () => {

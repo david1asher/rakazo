@@ -95,8 +95,8 @@ function buildPiCatalog(): PiCatalogEntry[] {
   return entries;
 }
 
-/** Trailing upstream "latest" marker: "Claude Opus 4.5 (latest)", "Gemini Flash Latest". */
-const LATEST_MARKER = /[\s(]*\blatest\b\s*\)?\s*$/i;
+/** Trailing upstream "latest" marker: "Claude Opus 4.5 (latest)", "Gemini Flash Latest", "foo-latest". */
+const LATEST_MARKER = /[\s(/-]*\blatest\b\s*\)?\s*$/i;
 
 /**
  * Upstream marks auto-updating alias ids with a trailing "latest". That is an alias marker, not a
@@ -118,13 +118,13 @@ export function catalogModelLabel(
 
 /**
  * An alias id either ends in `latest` or is the undated prefix of a dated sibling. The suffix has
- * to be an 8-digit date (`-20251001`); a variant like `-preview` or `-fast` is its own pinned
- * model, not a snapshot of this one.
+ * to be a bare date: eight digits (`-20251001`) or four-digit YYMM (`-2508`). A variant like
+ * `-preview` or `-fast` is its own pinned model, not a snapshot of this one.
  */
 function isAliasModelId(id: string, providerModelIds: readonly string[]): boolean {
   if (/[-/]latest$/i.test(id)) return true;
   return providerModelIds.some(
-    (other) => other.startsWith(`${id}-`) && /^\d{8}$/.test(other.slice(id.length + 1)),
+    (other) => other.startsWith(`${id}-`) && /^(\d{4}|\d{8})$/.test(other.slice(id.length + 1)),
   );
 }
 
