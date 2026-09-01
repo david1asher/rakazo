@@ -3152,3 +3152,4 @@ msgstr "Link zum Zurücksetzen senden"
 #: src/pages/Auth.tsx:261
 msgid "This reset link is invalid or expired"
 msgstr "Dieser Link zum Zurücksetzen ist ungültig oder abgelaufen"
+

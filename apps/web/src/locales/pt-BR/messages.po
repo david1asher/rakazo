@@ -3152,3 +3152,4 @@ msgstr "Enviar link de redefinição"
 #: src/pages/Auth.tsx:261
 msgid "This reset link is invalid or expired"
 msgstr "Este link de redefinição é inválido ou expirou"
+

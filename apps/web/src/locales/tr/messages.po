@@ -3152,3 +3152,4 @@ msgstr "Sıfırlama bağlantısı gönder"
 #: src/pages/Auth.tsx:261
 msgid "This reset link is invalid or expired"
 msgstr "Bu sıfırlama bağlantısı geçersiz veya süresi dolmuş"
+
