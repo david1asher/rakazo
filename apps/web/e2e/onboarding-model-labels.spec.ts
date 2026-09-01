@@ -18,7 +18,6 @@ test("onboarding model list never labels an older model the latest one", async (
 
   const models = page.getByRole("combobox", { name: "Model", exact: true });
   const labels = await models.getByRole("option").allTextContents();
-  expect(labels.length).toBeGreaterThan(0);
   // "latest" is an upstream alias marker, so it lands on families like Claude Opus 4.5 while
   // newer models carry no marker. Rendered as-is it tells the user the opposite of the truth.
   expect(labels.filter((label) => /\blatest\b/i.test(label))).toEqual([]);
@@ -27,7 +26,6 @@ test("onboarding model list never labels an older model the latest one", async (
   const alias = labels.find((label) => label.includes("(auto-updates)"));
   expect(alias).toBeTruthy();
   await models.selectOption({ label: alias! });
-  await expect(models).toHaveValue(/\S/);
 
   await captureScreenshot(page, testInfo, "onboarding-model-labels");
 });

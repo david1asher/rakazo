@@ -88,70 +88,43 @@ describe("Pi model catalog", () => {
     ).toBe(false);
   });
 
-  it('never labels a model "latest" when newer models are in the catalog', () => {
-    const anthropic = listPiCatalog().filter((entry) => entry.provider === "anthropic");
-    expect(anthropic.some((entry) => entry.id === "claude-opus-5")).toBe(true);
-    expect(anthropic.find((entry) => entry.id === "claude-opus-4-5")?.label).toBe(
-      "Claude Opus 4.5 (auto-updates)",
-    );
-    expect(listPiCatalog().some((entry) => /\blatest\b/i.test(entry.label))).toBe(false);
-  });
-
-  it("keeps an alias distinguishable from the snapshot it points at", () => {
-    const anthropic = listPiCatalog().filter((entry) => entry.provider === "anthropic");
-    const alias = anthropic.find((entry) => entry.id === "claude-haiku-4-5");
-    const snapshot = anthropic.find((entry) => entry.id === "claude-haiku-4-5-20251001");
-    expect(alias?.label).toBe("Claude Haiku 4.5 (auto-updates)");
-    expect(snapshot?.label).toBe("Claude Haiku 4.5");
+  it('never labels an older model "latest" and keeps aliases distinct from snapshots', () => {
+    const catalog = listPiCatalog();
+    const label = (id: string) =>
+      catalog.find((entry) => entry.provider === "anthropic" && entry.id === id)?.label;
+    expect(label("claude-opus-5")).toBeDefined();
+    expect(label("claude-opus-4-5")).toBe("Claude Opus 4.5 (auto-updates)");
+    expect(label("claude-haiku-4-5")).toBe("Claude Haiku 4.5 (auto-updates)");
+    expect(label("claude-haiku-4-5-20251001")).toBe("Claude Haiku 4.5");
+    expect(catalog.some((entry) => /\blatest\b/i.test(entry.label))).toBe(false);
   });
 });
 
 describe("catalogModelLabel", () => {
-  it("marks alias ids as auto-updating instead of latest", () => {
-    expect(
-      catalogModelLabel("claude-opus-4-5", "Claude Opus 4.5 (latest)", [
-        "claude-opus-4-5",
-        "claude-opus-4-5-20251101",
-      ]),
-    ).toBe("Claude Opus 4.5 (auto-updates)");
-    expect(catalogModelLabel("gemini-flash-latest", "Gemini Flash Latest", [])).toBe(
-      "Gemini Flash (auto-updates)",
-    );
-    expect(catalogModelLabel("mistral-large-latest", "Mistral Large (latest)", [])).toBe(
-      "Mistral Large (auto-updates)",
-    );
-  });
+  const providerModelIds = [
+    "claude-opus-4-5",
+    "claude-opus-4-5-20251101",
+    "mistral-medium",
+    "mistral-medium-2508",
+    "foo",
+    "foo-preview",
+  ];
 
-  it("does not treat a variant sibling as proof the id is an alias", () => {
-    // `-preview` is its own pinned model, not a dated snapshot of `foo`.
-    expect(catalogModelLabel("foo", "Foo Latest", ["foo", "foo-preview"])).toBe("Foo");
-    expect(
-      catalogModelLabel("some-model", "Some Model Latest", ["some-model", "some-model-20251001"]),
-    ).toBe("Some Model (auto-updates)");
-    expect(
-      catalogModelLabel("mistral-medium", "Mistral Medium Latest", [
-        "mistral-medium",
-        "mistral-medium-2508",
-      ]),
-    ).toBe("Mistral Medium (auto-updates)");
-  });
-
-  it("strips id separators when the name is the bare -latest or /latest id", () => {
-    expect(catalogModelLabel("foo-latest", "foo-latest", [])).toBe("foo (auto-updates)");
-    expect(catalogModelLabel("foo/latest", "foo/latest", [])).toBe("foo (auto-updates)");
-  });
-
-  it("drops a latest marker from a pinned id rather than promising updates", () => {
-    expect(
-      catalogModelLabel("mistral/mistral-medium-3.5", "Mistral Medium Latest", [
-        "mistral/mistral-medium-3.5",
-      ]),
-    ).toBe("Mistral Medium");
-  });
-
-  it("leaves ordinary labels alone and falls back to the id", () => {
-    expect(catalogModelLabel("claude-opus-5", "Claude Opus 5", [])).toBe("Claude Opus 5");
-    expect(catalogModelLabel("some-model", undefined, [])).toBe("some-model");
-    expect(catalogModelLabel("latest", "latest", [])).toBe("latest");
+  it.each([
+    // Alias: the id ends in `latest`, or a dated sibling proves the undated id floats.
+    ["claude-opus-4-5", "Claude Opus 4.5 (latest)", "Claude Opus 4.5 (auto-updates)"],
+    ["mistral-medium", "Mistral Medium Latest", "Mistral Medium (auto-updates)"],
+    ["gemini-flash-latest", "Gemini Flash Latest", "Gemini Flash (auto-updates)"],
+    ["foo-latest", "foo-latest", "foo (auto-updates)"],
+    ["foo/latest", "foo/latest", "foo (auto-updates)"],
+    // Pinned: `-preview` is its own model and a dated id is already a snapshot, so promise nothing.
+    ["foo", "Foo Latest", "Foo"],
+    ["claude-opus-4-5-20251101", "Claude Opus 4.5 (latest)", "Claude Opus 4.5"],
+    // Untouched: no marker, no name, or nothing left once the marker goes.
+    ["claude-opus-5", "Claude Opus 5", "Claude Opus 5"],
+    ["some-model", undefined, "some-model"],
+    ["latest", "latest", "latest"],
+  ])("labels %s / %s as %s", (id, name, expected) => {
+    expect(catalogModelLabel(id, name, providerModelIds)).toBe(expected);
   });
 });

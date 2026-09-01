@@ -83,7 +83,7 @@ function buildPiCatalog(): PiCatalogEntry[] {
       provider: "openrouter",
       providerName: "OpenRouter",
       id: envDefaultModel,
-      label: catalogModelLabel(envDefaultModel, envDefaultModel, []),
+      label: catalogModelLabel(envDefaultModel),
       billing: `Configured via PI_DEFAULT_MODEL (${envDefaultModel}).`,
       auth: "api-key",
       subscription: false,
@@ -106,8 +106,8 @@ const LATEST_MARKER = /[\s(/-]*\blatest\b\s*\)?\s*$/i;
  */
 export function catalogModelLabel(
   id: string,
-  name: string | undefined,
-  providerModelIds: readonly string[],
+  name?: string,
+  providerModelIds: readonly string[] = [],
 ): string {
   const label = name || id;
   if (!LATEST_MARKER.test(label)) return label;
