@@ -30,6 +30,7 @@ describe("Pi model catalog", () => {
       signIn: "auth-url",
       authHint: "Claude Pro/Max / key",
       oauthLabel: "Sign in with Claude Pro/Max",
+      billing: "",
     });
     expect(scriptedCatalogEntry.provider).toBe("scripted");
   });
