@@ -110,12 +110,13 @@ describe("catalogModelLabel", () => {
   });
 
   it("does not treat a variant sibling as proof the id is an alias", () => {
-    // `-preview` is its own pinned model, not a dated snapshot of `some-model`.
+    // `-preview` is its own pinned model, not a dated snapshot of `foo`.
+    expect(catalogModelLabel("foo", "Foo Latest", ["foo", "foo-preview"])).toBe("Foo");
     expect(
-      catalogModelLabel("some-model", "Some Model Latest", ["some-model", "some-model-preview"]),
-    ).toBe("Some Model");
-    expect(
-      catalogModelLabel("some-model", "Some Model Latest", ["some-model", "some-model-2604"]),
+      catalogModelLabel("some-model", "Some Model Latest", [
+        "some-model",
+        "some-model-20251001",
+      ]),
     ).toBe("Some Model (auto-updates)");
   });
 

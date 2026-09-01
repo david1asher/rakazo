@@ -83,7 +83,7 @@ function buildPiCatalog(): PiCatalogEntry[] {
       provider: "openrouter",
       providerName: "OpenRouter",
       id: envDefaultModel,
-      label: envDefaultModel,
+      label: catalogModelLabel(envDefaultModel, envDefaultModel, []),
       billing: `Configured via PI_DEFAULT_MODEL (${envDefaultModel}).`,
       auth: "api-key",
       subscription: false,
@@ -118,13 +118,13 @@ export function catalogModelLabel(
 
 /**
  * An alias id either ends in `latest` or is the undated prefix of a dated sibling. The suffix has
- * to be a bare date (`-20251101`, `-2604`) — a variant like `-preview` or `-fast` is its own pinned
+ * to be an 8-digit date (`-20251001`); a variant like `-preview` or `-fast` is its own pinned
  * model, not a snapshot of this one.
  */
 function isAliasModelId(id: string, providerModelIds: readonly string[]): boolean {
   if (/[-/]latest$/i.test(id)) return true;
   return providerModelIds.some(
-    (other) => other.startsWith(`${id}-`) && /^\d{4,8}$/.test(other.slice(id.length + 1)),
+    (other) => other.startsWith(`${id}-`) && /^\d{8}$/.test(other.slice(id.length + 1)),
   );
 }
 
