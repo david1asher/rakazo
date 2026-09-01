@@ -118,13 +118,13 @@ export function catalogModelLabel(
 
 /**
  * An alias id either ends in `latest` or is the undated prefix of a dated sibling. The suffix has
- * to be a bare date: eight digits (`-20251001`) or four-digit YYMM (`-2508`). A variant like
- * `-preview` or `-fast` is its own pinned model, not a snapshot of this one.
+ * to be a bare date of 4-8 digits (`-2508`, `-260401`, `-20251001`). A variant like `-preview` or
+ * `-fast` is its own pinned model, not a snapshot of this one.
  */
 function isAliasModelId(id: string, providerModelIds: readonly string[]): boolean {
   if (/[-/]latest$/i.test(id)) return true;
   return providerModelIds.some(
-    (other) => other.startsWith(`${id}-`) && /^(\d{4}|\d{8})$/.test(other.slice(id.length + 1)),
+    (other) => other.startsWith(`${id}-`) && /^\d{4,8}$/.test(other.slice(id.length + 1)),
   );
 }
 

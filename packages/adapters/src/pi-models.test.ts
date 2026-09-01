@@ -106,6 +106,8 @@ describe("catalogModelLabel", () => {
     "claude-opus-4-5-20251101",
     "mistral-medium",
     "mistral-medium-2508",
+    "mistral-small",
+    "mistral-small-260401",
     "foo",
     "foo-preview",
   ];
@@ -114,6 +116,7 @@ describe("catalogModelLabel", () => {
     // Alias: the id ends in `latest`, or a dated sibling proves the undated id floats.
     ["claude-opus-4-5", "Claude Opus 4.5 (latest)", "Claude Opus 4.5 (auto-updates)"],
     ["mistral-medium", "Mistral Medium Latest", "Mistral Medium (auto-updates)"],
+    ["mistral-small", "Mistral Small Latest", "Mistral Small (auto-updates)"],
     ["gemini-flash-latest", "Gemini Flash Latest", "Gemini Flash (auto-updates)"],
     ["foo-latest", "foo-latest", "foo (auto-updates)"],
     ["foo/latest", "foo/latest", "foo (auto-updates)"],
