@@ -1,5 +1,6 @@
-import { buildSkillMd, formatSkillsCatalogInstruction } from "@rakazo/core";
+import { buildSkillMd, formatSkillsCatalogInstruction, parseSkillMd } from "@rakazo/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { BUILTIN_AGENT_SKILLS } from "./builtin-skills.js";
 import {
   listAgentSkillRecords,
   skillCreateFromTool,
@@ -213,6 +214,44 @@ describe("skill tools", () => {
       }),
     ).toEqual({ error: "Builtin and plugin skills are read-only." });
     expect(await skillDeleteFromTool(prisma as never, owner, { name: "Plugin recipe" })).toEqual({
+      error: "Builtin and plugin skills are read-only.",
+    });
+  });
+
+  it("ships builtin skills as valid, readable, read-only SKILL.md records", async () => {
+    expect(BUILTIN_AGENT_SKILLS.map((skill) => skill.name)).toContain("Interrogate");
+    for (const skill of BUILTIN_AGENT_SKILLS) {
+      const parsed = parseSkillMd(skill.content);
+      expect(parsed).toMatchObject({ name: skill.name, description: skill.description });
+    }
+
+    const records = await listAgentSkillRecords(prisma as never, owner);
+    const interrogate = records.find((row) => row.name === "Interrogate");
+    expect(interrogate).toMatchObject({
+      id: "builtin:Interrogate",
+      source: "builtin",
+      readOnly: true,
+    });
+    expect(formatSkillsCatalogInstruction(records)).toContain("- Interrogate:");
+
+    const read = await skillReadFromTool(prisma as never, owner, { name: "interrogate" });
+    expect(read).toMatchObject({ name: "Interrogate", source: "builtin", readOnly: true });
+    expect(String(read.content)).toContain("Do not modify files");
+
+    expect(
+      await skillCreateFromTool(prisma as never, owner, {
+        name: "interrogate",
+        description: "shadow the builtin",
+        body: "steps",
+      }),
+    ).toEqual({ error: 'A skill named "Interrogate" already exists.' });
+    expect(
+      await skillUpdateFromTool(prisma as never, owner, {
+        name: "Interrogate",
+        description: "hijack",
+      }),
+    ).toEqual({ error: "Builtin and plugin skills are read-only." });
+    expect(await skillDeleteFromTool(prisma as never, owner, { name: "Interrogate" })).toEqual({
       error: "Builtin and plugin skills are read-only.",
     });
   });
