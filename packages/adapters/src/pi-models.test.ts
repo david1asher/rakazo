@@ -109,6 +109,16 @@ describe("catalogModelLabel", () => {
     );
   });
 
+  it("does not treat a variant sibling as proof the id is an alias", () => {
+    // `-preview` is its own pinned model, not a dated snapshot of `some-model`.
+    expect(
+      catalogModelLabel("some-model", "Some Model Latest", ["some-model", "some-model-preview"]),
+    ).toBe("Some Model");
+    expect(
+      catalogModelLabel("some-model", "Some Model Latest", ["some-model", "some-model-2604"]),
+    ).toBe("Some Model (auto-updates)");
+  });
+
   it("drops a latest marker from a pinned id rather than promising updates", () => {
     expect(
       catalogModelLabel("mistral/mistral-medium-3.5", "Mistral Medium Latest", [

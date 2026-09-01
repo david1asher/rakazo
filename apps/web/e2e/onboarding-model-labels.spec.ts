@@ -22,7 +22,12 @@ test("onboarding model list never labels an older model the latest one", async (
   // "latest" is an upstream alias marker, so it lands on families like Claude Opus 4.5 while
   // newer models carry no marker. Rendered as-is it tells the user the opposite of the truth.
   expect(labels.filter((label) => /\blatest\b/i.test(label))).toEqual([]);
-  expect(labels.some((label) => label.includes("(auto-updates)"))).toBe(true);
+
+  // Select the alias so the closed native picker shows the rewritten label in the screenshot.
+  const alias = labels.find((label) => label.includes("(auto-updates)"));
+  expect(alias).toBeTruthy();
+  await models.selectOption({ label: alias! });
+  await expect(models).toHaveValue(/\S/);
 
   await captureScreenshot(page, testInfo, "onboarding-model-labels");
 });
