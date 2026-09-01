@@ -259,6 +259,44 @@ describe("skill tools", () => {
     });
   });
 
+  it("keeps a pre-existing user skill reachable when its name collides with a builtin", async () => {
+    prisma = makePrisma([
+      {
+        id: "legacy-1",
+        spaceId: owner.spaceId,
+        userId: owner.userId,
+        name: "interrogate",
+        description: "my review recipe",
+        content: buildSkillMd({
+          name: "interrogate",
+          description: "my review recipe",
+          body: "my steps",
+        }),
+        source: "user",
+      },
+    ]);
+
+    const records = await listAgentSkillRecords(prisma as never, owner);
+    expect(records.filter((skill) => skill.name.toLowerCase() === "interrogate")).toEqual([
+      expect.objectContaining({ id: "legacy-1", source: "user", readOnly: false }),
+    ]);
+    expect(await skillReadFromTool(prisma as never, owner, { name: "Interrogate" })).toMatchObject({
+      name: "interrogate",
+      source: "user",
+      readOnly: false,
+    });
+    expect(
+      await skillUpdateFromTool(prisma as never, owner, {
+        name: "Interrogate",
+        description: "still mine",
+      }),
+    ).toMatchObject({ ok: true });
+    expect(await skillDeleteFromTool(prisma as never, owner, { name: "Interrogate" })).toEqual({
+      ok: true,
+      name: "interrogate",
+    });
+  });
+
   it("rejects oversized skill content", async () => {
     const body = "x".repeat(100_001);
     const created = await skillCreateFromTool(prisma as never, owner, {
