@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { listPiCatalog, scriptedCatalogEntry } from "./pi-models.js";
+import { catalogModelLabel, listPiCatalog, scriptedCatalogEntry } from "./pi-models.js";
 
 describe("Pi model catalog", () => {
   afterEach(() => {
@@ -73,5 +73,53 @@ describe("Pi model catalog", () => {
         (entry) => entry.provider === "anthropic" && entry.id === "future/unknown-model",
       ),
     ).toBe(false);
+  });
+
+  it('never labels a model "latest" when newer models are in the catalog', () => {
+    const anthropic = listPiCatalog().filter((entry) => entry.provider === "anthropic");
+    expect(anthropic.some((entry) => entry.id === "claude-opus-5")).toBe(true);
+    expect(anthropic.find((entry) => entry.id === "claude-opus-4-5")?.label).toBe(
+      "Claude Opus 4.5 (auto-updates)",
+    );
+    expect(listPiCatalog().some((entry) => /\blatest\b/i.test(entry.label))).toBe(false);
+  });
+
+  it("keeps an alias distinguishable from the snapshot it points at", () => {
+    const anthropic = listPiCatalog().filter((entry) => entry.provider === "anthropic");
+    const alias = anthropic.find((entry) => entry.id === "claude-haiku-4-5");
+    const snapshot = anthropic.find((entry) => entry.id === "claude-haiku-4-5-20251001");
+    expect(alias?.label).toBe("Claude Haiku 4.5 (auto-updates)");
+    expect(snapshot?.label).toBe("Claude Haiku 4.5");
+  });
+});
+
+describe("catalogModelLabel", () => {
+  it("marks alias ids as auto-updating instead of latest", () => {
+    expect(
+      catalogModelLabel("claude-opus-4-5", "Claude Opus 4.5 (latest)", [
+        "claude-opus-4-5",
+        "claude-opus-4-5-20251101",
+      ]),
+    ).toBe("Claude Opus 4.5 (auto-updates)");
+    expect(catalogModelLabel("gemini-flash-latest", "Gemini Flash Latest", [])).toBe(
+      "Gemini Flash (auto-updates)",
+    );
+    expect(catalogModelLabel("mistral-large-latest", "Mistral Large (latest)", [])).toBe(
+      "Mistral Large (auto-updates)",
+    );
+  });
+
+  it("drops a latest marker from a pinned id rather than promising updates", () => {
+    expect(
+      catalogModelLabel("mistral/mistral-medium-3.5", "Mistral Medium Latest", [
+        "mistral/mistral-medium-3.5",
+      ]),
+    ).toBe("Mistral Medium");
+  });
+
+  it("leaves ordinary labels alone and falls back to the id", () => {
+    expect(catalogModelLabel("claude-opus-5", "Claude Opus 5", [])).toBe("Claude Opus 5");
+    expect(catalogModelLabel("some-model", undefined, [])).toBe("some-model");
+    expect(catalogModelLabel("latest", "latest", [])).toBe("latest");
   });
 });

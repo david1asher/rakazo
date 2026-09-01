@@ -33,6 +33,8 @@ test("model dropdown search and provider group headers", async ({ page }, testIn
   const optionTexts = await modelOptions.getByRole("option").allTextContents();
   expect(optionTexts.length).toBeGreaterThan(0);
   expect(optionTexts.every((text) => /claude/i.test(text))).toBe(true);
+  // Upstream's "latest" alias marker sits on older families, so it must never reach the picker.
+  expect(optionTexts.filter((text) => /\blatest\b/i.test(text))).toEqual([]);
   await expect(page.getByText("No matching models")).toBeHidden();
 
   await captureScreenshot(page, testInfo, "model-picker-dropdown-filtered");
