@@ -204,18 +204,6 @@ export function extractRoutineSkillMentions(prompt: string, knownNames?: string[
   return names;
 }
 
-/**
- * Builtins first, minus any shadowed by a same-named (case-insensitive) user row,
- * so a pre-existing user skill stays readable and mutable.
- */
-export function mergeBuiltinSkills<T extends { name: string }>(
-  builtins: readonly T[],
-  rows: readonly T[],
-): T[] {
-  const taken = new Set(rows.map((row) => row.name.trim().toLowerCase()));
-  return [...builtins.filter((skill) => !taken.has(skill.name.trim().toLowerCase())), ...rows];
-}
-
 export function findSkillByName<T extends { name: string }>(
   skills: readonly T[],
   name: string,

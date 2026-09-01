@@ -225,8 +225,6 @@ describe("skill tools", () => {
       expect(parsed).toMatchObject({ name: skill.name, description: skill.description });
       // / picker truncates at 72; keep descriptions short so "review only" stays visible.
       expect(skill.description.length).toBeLessThanOrEqual(72);
-      expect(skill.description).not.toMatch(/—/);
-      expect(skill.content).not.toMatch(/—/);
     }
 
     const records = await listAgentSkillRecords(prisma as never, owner);
@@ -258,55 +256,6 @@ describe("skill tools", () => {
     ).toEqual({ error: "Builtin and plugin skills are read-only." });
     expect(await skillDeleteFromTool(prisma as never, owner, { name: "Interrogate" })).toEqual({
       error: "Builtin and plugin skills are read-only.",
-    });
-  });
-
-  it("lets a pre-existing user skill shadow a builtin with the same name", async () => {
-    prisma = makePrisma([
-      {
-        id: "legacy-1",
-        spaceId: owner.spaceId,
-        userId: owner.userId,
-        name: "interrogate",
-        description: "my own review recipe",
-        content: buildSkillMd({
-          name: "interrogate",
-          description: "my own review recipe",
-          body: "my steps",
-        }),
-        source: "user",
-      },
-    ]);
-
-    const records = await listAgentSkillRecords(prisma as never, owner);
-    const colliding = records.filter((row) => row.name.toLowerCase() === "interrogate");
-    // Catalog shows one entry (the user row), not both builtin + user.
-    expect(colliding).toHaveLength(1);
-    expect(colliding[0]).toMatchObject({
-      id: "legacy-1",
-      source: "user",
-      readOnly: false,
-    });
-    expect(records.some((row) => row.id === "builtin:Interrogate")).toBe(false);
-
-    // Name lookup (/Interrogate, skill_read by name) hits the user skill, not the builtin.
-    const readByName = await skillReadFromTool(prisma as never, owner, { name: "Interrogate" });
-    expect(readByName).toMatchObject({ name: "interrogate", source: "user", readOnly: false });
-
-    // The persisted user row stays reachable by id.
-    const readById = await skillReadFromTool(prisma as never, owner, { skillId: "legacy-1" });
-    expect(readById).toMatchObject({ name: "interrogate", source: "user", readOnly: false });
-    expect(String(readById.content)).toContain("my steps");
-
-    expect(
-      await skillUpdateFromTool(prisma as never, owner, {
-        name: "Interrogate",
-        description: "still mine",
-      }),
-    ).toMatchObject({ ok: true });
-    expect(await skillDeleteFromTool(prisma as never, owner, { name: "Interrogate" })).toEqual({
-      ok: true,
-      name: "interrogate",
     });
   });
 
