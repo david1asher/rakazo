@@ -89,7 +89,11 @@ export async function listAgentSkillRecords(
     where: { spaceId: owner.spaceId, userId: owner.userId },
     orderBy: [{ name: "asc" }, { id: "asc" }],
   });
-  return [...builtinRecords(), ...rows.map(toRecord)];
+  const records = rows.map(toRecord);
+  // A pre-existing user skill with a builtin's name wins, so it stays readable and mutable.
+  const taken = new Set(records.map((record) => record.name.trim().toLowerCase()));
+  const builtins = builtinRecords().filter((skill) => !taken.has(skill.name.trim().toLowerCase()));
+  return [...builtins, ...records];
 }
 
 async function findOwnedSkill(

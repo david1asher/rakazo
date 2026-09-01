@@ -33,6 +33,13 @@ export function mapAgentSkill(row: AgentSkillRow): AgentSkill {
   };
 }
 
+/** A pre-existing user skill with a builtin's name wins, so it stays readable and mutable. */
+function mergeWithBuiltins(rows: AgentSkill[]): AgentSkill[] {
+  const taken = new Set(rows.map((row) => row.name.trim().toLowerCase()));
+  const builtins = builtinCatalog().filter((skill) => !taken.has(skill.name.trim().toLowerCase()));
+  return [...builtins, ...rows];
+}
+
 function builtinCatalog(): AgentSkill[] {
   return BUILTIN_AGENT_SKILLS.map((skill) => ({
     id: `builtin:${skill.name}`,
@@ -130,10 +137,9 @@ export function createAgentSkillsService(prisma: PrismaClient) {
         where: { spaceId: actor.spaceId, userId: actor.userId },
         orderBy: [{ name: "asc" }, { id: "asc" }],
       });
-      const catalog = [...builtinCatalog(), ...rows.map(mapAgentSkill)].map(
+      return mergeWithBuiltins(rows.map(mapAgentSkill)).map(
         ({ content: _content, ...entry }) => entry,
       );
-      return catalog;
     },
 
     async listWithContent(actor: Actor): Promise<AgentSkill[]> {
@@ -141,7 +147,7 @@ export function createAgentSkillsService(prisma: PrismaClient) {
         where: { spaceId: actor.spaceId, userId: actor.userId },
         orderBy: [{ name: "asc" }, { id: "asc" }],
       });
-      return [...builtinCatalog(), ...rows.map(mapAgentSkill)];
+      return mergeWithBuiltins(rows.map(mapAgentSkill));
     },
 
     async get(actor: Actor, input: { skillId?: string; name?: string }): Promise<AgentSkill> {
@@ -154,10 +160,7 @@ export function createAgentSkillsService(prisma: PrismaClient) {
         return mapAgentSkill(await owned(actor, input.skillId));
       }
       const name = input.name?.trim() ?? "";
-      const builtin = builtinCatalog().find(
-        (skill) => skill.name.toLowerCase() === name.toLowerCase(),
-      );
-      if (builtin) return builtin;
+      // User rows first: a pre-existing user skill shadows a builtin with the same name.
       const row = await prisma.agentSkill.findFirst({
         where: {
           spaceId: actor.spaceId,
@@ -165,8 +168,12 @@ export function createAgentSkillsService(prisma: PrismaClient) {
           name: { equals: name, mode: "insensitive" },
         },
       });
-      if (!row) throw new IsolationError();
-      return mapAgentSkill(row);
+      if (row) return mapAgentSkill(row);
+      const builtin = builtinCatalog().find(
+        (skill) => skill.name.toLowerCase() === name.toLowerCase(),
+      );
+      if (!builtin) throw new IsolationError();
+      return builtin;
     },
 
     async create(
