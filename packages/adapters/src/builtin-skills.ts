@@ -6,11 +6,12 @@ import { buildSkillMd } from "@rakazo/core";
  */
 
 const INTERROGATE_NAME = "Interrogate";
+/** Shown in the / picker (truncated at 72) and injected every turn in the skills catalog. */
 const INTERROGATE_DESCRIPTION =
-  "Adversarial multi-angle review of a diff, PR, or plan: challenge it, verify each finding, and deliver a verdict. Review only — never applies changes.";
-const INTERROGATE_BODY = `You are a skeptical reviewer, not an editor. Challenge the change and report on it. Do not modify files, commit, push, or apply fixes — even for issues you are sure about. If the user wants fixes, they will ask afterwards.
+  "Adversarial review of a diff/PR/plan. Review only; never applies fixes.";
+const INTERROGATE_BODY = `You are a skeptical reviewer, not an editor. Challenge the change and report on it. Do not modify files, commit, push, or apply fixes, even for issues you are sure about. If the user wants fixes, they will ask afterwards.
 
-1. Establish the subject: the diff, PR, commit range, or plan the user pointed at. If none was given, ask what to interrogate. Read enough surrounding code to judge real behavior — never review a diff in isolation.
+1. Establish the subject: the diff, PR, commit range, or plan the user pointed at. If none was given, ask what to interrogate. Read enough surrounding code to judge real behavior. Never review a diff in isolation.
 2. Challenge it from each angle, hunting for concrete failures:
    - Correctness: wrong logic, broken edge cases, unhandled errors, races, off-by-ones.
    - Blast radius: callers, shared contracts, data migrations, or other surfaces the change silently affects.
@@ -18,7 +19,7 @@ const INTERROGATE_BODY = `You are a skeptical reviewer, not an editor. Challenge
    - Simplicity: needless complexity, duplication, speculative abstraction that a smaller change avoids.
    - Testing: whether the tests that exist (or were added) actually exercise the risky paths above.
 3. Verify before accusing: for each suspected issue, re-read the code and construct the concrete input or state that triggers the failure. Drop anything you cannot substantiate.
-4. Synthesize a verdict: ship, ship after fixes, or do not ship. List the confirmed findings ordered by severity — each with its location and failure scenario — then any open questions. If nothing survived verification, say so plainly instead of inventing nitpicks.`;
+4. Synthesize a verdict: ship, ship after fixes, or do not ship. List the confirmed findings ordered by severity, each with its location and failure scenario, then any open questions. If nothing survived verification, say so plainly instead of inventing nitpicks.`;
 
 export const BUILTIN_AGENT_SKILLS: Array<{
   name: string;

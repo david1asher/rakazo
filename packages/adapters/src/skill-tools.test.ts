@@ -223,6 +223,10 @@ describe("skill tools", () => {
     for (const skill of BUILTIN_AGENT_SKILLS) {
       const parsed = parseSkillMd(skill.content);
       expect(parsed).toMatchObject({ name: skill.name, description: skill.description });
+      // / picker truncates at 72; keep descriptions short so "review only" stays visible.
+      expect(skill.description.length).toBeLessThanOrEqual(72);
+      expect(skill.description).not.toMatch(/—/);
+      expect(skill.content).not.toMatch(/—/);
     }
 
     const records = await listAgentSkillRecords(prisma as never, owner);
@@ -233,6 +237,7 @@ describe("skill tools", () => {
       readOnly: true,
     });
     expect(formatSkillsCatalogInstruction(records)).toContain("- Interrogate:");
+    expect(formatSkillsCatalogInstruction(records)).toContain("Review only");
 
     const read = await skillReadFromTool(prisma as never, owner, { name: "interrogate" });
     expect(read).toMatchObject({ name: "Interrogate", source: "builtin", readOnly: true });
